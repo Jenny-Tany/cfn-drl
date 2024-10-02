@@ -1,0 +1,8 @@
+<component name="ArtifactManager">
+  <artifact type="exploded-ear" name="EdgeCloudSim-DeepEdge:javaEEApplication exploded">
+    <output-path>$PROJECT_DIR$/out/artifacts/EdgeCloudSim_DeepEdge_javaEEApplication_exploded</output-path>
+    <root id="root">
+      <element id="javaee-facet-resources" facet="EdgeCloudSim-DeepEdge/javaeeApplication/javaEEApplication" />
+    </root>
+  </artifact>
+</component>
