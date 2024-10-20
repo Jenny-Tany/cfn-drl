@@ -11,7 +11,13 @@ import edu.boun.edgecloudsim.utils.TaskProperty;
 import org.cloudbus.cloudsim.UtilizationModel;
 import org.cloudbus.cloudsim.UtilizationModelFull;
 import org.cloudbus.cloudsim.core.SimEvent;
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.ChartPanel;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.PlotOrientation;
+import org.jfree.data.category.DefaultCategoryDataset;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -34,6 +40,8 @@ public class DeepMobileDeviceManager extends MobileDeviceManager{
     private static DeepMobileDeviceManager instance = null;
     private  DDQNAgent agent;
     private int stateSize;
+
+    private long lastVisualizationTime = 0;
 
     public  DeepMobileDeviceManager (int hostNum,int edgeNum) throws Exception{
         stateSize = 6+edgeNum*2+hostNum*4;
@@ -134,7 +142,60 @@ public class DeepMobileDeviceManager extends MobileDeviceManager{
         return nextHopId;
     }
 
-//训练DDQN
+    // 添加可视化方法，接收任务作为参数
+    public void visualizeMetrics(Task task) {
+        DDQNAgent agent = DDQNAgent.getInstance();
+
+        // 获取任务完成率、平均奖励、网络延迟和算力使用情况等指标
+        double taskCompletionRate = agent.getTaskCompletionRate();
+        double averageReward = agent.getAvgQvalue();
+        double networkDelay = getNetworkDelayForTask(task);
+        double cpuUtilization = getCpuUtilizationForTask(task);
+
+        // 创建数据集用于绘图
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        dataset.addValue(taskCompletionRate, "Task Completion Rate", "");
+        dataset.addValue(averageReward, "Average Reward", "");
+        dataset.addValue(networkDelay, "Network Delay", "");
+        dataset.addValue(cpuUtilization, "CPU Utilization", "");
+
+        // 创建图表
+        JFreeChart chart = ChartFactory.createBarChart(
+                "Metrics Visualization",
+                "Metrics",
+                "Value",
+                dataset,
+                PlotOrientation.VERTICAL,
+                true,
+                true,
+                false
+        );
+
+        // 创建图表面板并显示在窗口中
+        ChartPanel chartPanel = new ChartPanel(chart);
+        JFrame frame = new JFrame("Metrics Visualization");
+        frame.setContentPane(chartPanel);
+        frame.setSize(800, 600);
+        frame.setVisible(true);
+    }
+
+    private double getNetworkDelayForTask(Task task) {
+        // 返回任务的网络延迟，根据实际情况实现
+        return 0.0;
+    }
+
+    private double getCpuUtilizationForTask(Task task) {
+        // 返回任务的算力使用情况，根据实际情况实现
+        return 0.0;
+    }
+
+
+    // 假设的获取当前模拟时间的方法
+    private long getCurrentSimulationTime() {
+        // 根据实际情况实现获取当前模拟时间的方法
+        return 0;
+    }
+    //训练DDQN
 public void TrainAgentforDeepEdge(Task task, boolean isFailed){
 
         DDQNAgent agent = DDQNAgent.getInstance();
@@ -149,8 +210,23 @@ public void TrainAgentforDeepEdge(Task task, boolean isFailed){
         totalReward += reward;
         agent.setReward(totalReward);
 
+    // 更新任务完成状态
+    agent.updateTaskCompletionStatus(!isFailed);
+
+    // 记录其他指标，假设可以通过以下方式获取网络延迟和算力使用情况
+    double networkDelay = getNetworkDelayForTask(task);
+    double cpuUtilization = getCpuUtilizationForTask(task);
 
         HashMap<Integer, Integer> pair = taskToStateActionPair.get(task.getCloudletId());
+
+    // 获取当前模拟时间
+    long currentTime = getCurrentSimulationTime();
+
+    // 如果距离上次可视化时间超过 2 分钟，则进行可视化
+    if (currentTime - lastVisualizationTime >= 2 * 60) {
+        visualizeMetrics(task);
+        lastVisualizationTime = currentTime;
+    }
 
         //System.out.println("Size of taskToStateActionPair: "+ taskToStateActionPair.size());
         int stateId = pair.entrySet().iterator().next().getKey();

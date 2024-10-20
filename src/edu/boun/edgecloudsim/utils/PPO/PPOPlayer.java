@@ -16,6 +16,11 @@ public class PPOPlayer {
     private Network critic = new Network();
     private static PPOPlayer instance = null;
 
+    // add learning rate schedulers
+    private LearningRateScheduler actorLRScheduler;
+    private LearningRateScheduler criticLRScheduler;
+
+
     public int batchLen = 200;
     public List<Integer> finishCount=new ArrayList<>();
     public List<List<GameState>> stateMap=new ArrayList<>();
@@ -27,6 +32,16 @@ public class PPOPlayer {
 
     public PPOPlayer() {
         int actionSize  =0,feature = 0;
+
+        // add learning rate schedulers
+        double actorDecayRate = 0.95;
+        int actorDecayStep = 10;
+        actorLRScheduler = new LearningRateScheduler(actor.getLearningRate(), actorDecayRate, actorDecayStep);
+
+        double criticDecayRate = 0.95;
+        int criticDecayStep = 10;
+        criticLRScheduler = new LearningRateScheduler(critic.getLearningRate(), criticDecayRate, criticDecayStep);
+
         if(SimSettings.getInstance().getTOPO().equals("NSFNET")){
             actionSize = 30;
         }else if (SimSettings.getInstance().getTOPO().equals("GBN")) {
@@ -337,6 +352,11 @@ public class PPOPlayer {
                 critic.getLayers().forEach(layer -> layer.updateParams(critic.getLearningRate()));
 
             }
+            // add Update learning rates.
+            double actorLearningRate = actorLRScheduler.getLearningRate(epoch);
+            double criticLearningRate = criticLRScheduler.getLearningRate(epoch);
+            actor.getLayers().forEach(layer -> layer.updateParams(actorLearningRate));
+            critic.getLayers().forEach(layer -> layer.updateParams(criticLearningRate));
         }
 
         // Clear memory.
@@ -364,5 +384,20 @@ public class PPOPlayer {
             standardized[i1] = (arr[i1] - mean) / std;
         }
         return standardized;
+    }
+}
+class LearningRateScheduler {
+    private double initialLearningRate;
+    private double decayRate;
+    private int decayStep;
+
+    public LearningRateScheduler(double initialLearningRate, double decayRate, int decayStep) {
+        this.initialLearningRate = initialLearningRate;
+        this.decayRate = decayRate;
+        this.decayStep = decayStep;
+    }
+
+    public double getLearningRate(int epoch) {
+        return initialLearningRate * Math.pow(decayRate, epoch / decayStep);
     }
 }

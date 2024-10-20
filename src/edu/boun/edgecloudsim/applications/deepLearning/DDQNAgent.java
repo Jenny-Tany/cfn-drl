@@ -42,8 +42,16 @@ public class DDQNAgent {
     private double avgQValue;
     private int actionCount;
 
+    // 添加成员变量用于跟踪任务完成情况
+    private int completedTasks;
+    private int totalTasks;
+
 
     public DDQNAgent(int stateSize,int numberOfEdgeServers){
+        // 初始化新添加的成员变量
+        completedTasks = 0;
+        totalTasks = 0;
+
         this.counterForEpsilon = 0;
         totalReward = 0;
         this.numberOfActions = numberOfEdgeServers; // +1 comes from the cloud server
@@ -86,6 +94,22 @@ public class DDQNAgent {
         syncTargetNetwork();
         instance = this;
 
+    }
+    // 更新任务完成状态的方法
+    public void updateTaskCompletionStatus(boolean isTaskCompleted) {
+        totalTasks++;
+        if (isTaskCompleted) {
+            completedTasks++;
+        }
+    }
+
+    // 获取任务完成率的方法
+    public double getTaskCompletionRate() {
+        if (totalTasks > 0) {
+            return (double) completedTasks / totalTasks;
+        } else {
+            return 0.0;
+        }
     }
 
     public static edu.boun.edgecloudsim.applications.deepLearning.DDQNAgent getInstance(){
