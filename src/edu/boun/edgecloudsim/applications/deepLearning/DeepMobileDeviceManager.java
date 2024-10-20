@@ -210,6 +210,10 @@ public void TrainAgentforDeepEdge(Task task, boolean isFailed){
         totalReward += reward;
         agent.setReward(totalReward);
 
+    // 更新任务完成率和平均奖励
+    agent.updatePerformanceMetrics(reward);
+//    agent.updateTargetNetwork();
+
     // 更新任务完成状态
     agent.updateTaskCompletionStatus(!isFailed);
 

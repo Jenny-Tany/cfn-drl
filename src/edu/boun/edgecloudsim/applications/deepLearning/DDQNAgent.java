@@ -46,6 +46,13 @@ public class DDQNAgent {
     private int completedTasks;
     private int totalTasks;
 
+    // 添加新的成员变量用于跟踪任务完成率和平均奖励
+    private double taskCompletionRate;
+    private double averageReward;
+    private double targetCompletionRate = 0.8; // 目标任务完成率，可以根据实际情况调整
+    private double targetAverageReward = 5.0; // 目标平均奖励，可以根据实际情况调整
+    private double increaseFactor = 1.05; // 当任务完成率低或平均奖励低时增加探索率的因子，可以根据实际情况调整
+
 
     public DDQNAgent(int stateSize,int numberOfEdgeServers){
         // 初始化新添加的成员变量
@@ -191,6 +198,17 @@ public class DDQNAgent {
         Random rand = new Random();
         double randomNumber = rand.nextFloat();
         this.counterForEpsilon++;
+
+        // add
+        double explorationRate = epsilon;
+        if (taskCompletionRate < targetCompletionRate || averageReward < targetAverageReward) {
+            explorationRate = Math.max(explorationRate * increaseFactor, MIN_EPSILON);
+        } else {
+            explorationRate = Math.max(explorationRate * EPSILON_FACTOR, MIN_EPSILON);
+        }
+
+
+
         if (randomNumber <= this.epsilon){
             if (this.epsilon > MIN_EPSILON){
                 this.epsilon = Math.max(this.epsilon * EPSILON_FACTOR, MIN_EPSILON);
@@ -265,6 +283,16 @@ public class DDQNAgent {
         String modelName = "DDQNModel-";
         modelName = modelName + episodeNo + "-"+ reward + "-" + avgQValue;
         this.qNetwork.save(new File("model", modelName), false);
+    }
+
+    // add methods to update performance metrics
+    // 添加方法用于更新任务完成率和平均奖励
+    public void updatePerformanceMetrics(double newReward) {
+        totalReward += newReward;
+        averageReward = totalReward / actionCount;
+
+        // 假设可以通过某种方式获取当前任务完成率，这里只是一个简单的示例
+        taskCompletionRate = Math.random() * 0.5 + 0.5;
     }
 
 }
